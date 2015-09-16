@@ -1,0 +1,14 @@
+Read the first line of a zipped file:
+gunzip -c *zipped file* | head -n 1
+
+Count number of lines in a zipped file:
+gunzip -c *zipped fil* | wc -l
+
+Read first 10 lines of the fifth column of zipped file:
+gunzip -c *zipped file* | cut -f5 | head
+
+Find types of articles: (n = numeric flag)
+gunzip -c *zipped file* | cut -f5 | sort -n
+
+Find only research articles, get max citations from that list
+gunzip -c *zipped file* | cut -f32 | sort -n | tail -n 1

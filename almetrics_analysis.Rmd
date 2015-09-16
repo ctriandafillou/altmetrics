@@ -1,0 +1,290 @@
+---
+title: "On the origin of citations"
+author: "Catherine Triandafillou"
+date: "September 15, 2015"
+output: 
+  html_document:
+    toc: true
+    number_sections: true
+    theme: cerulean
+    highlight: espresso
+    fig_width: 8
+    fig_height: 8
+    fig_caption: yes
+    self_contained: false
+---
+
+# Load the data
+
+```{r load_data}
+counts_raw <- read.delim("data/counts-raw.txt")
+counts_norm <- read.delim("data/counts-raw.txt")
+```
+
+# Data exploration
+
+What's the distribution of authors in all articles of our dataset?
+
+```{r author_histogram, echo=FALSE, fig.cap="Figure 1: Number of Authors per Article"}
+hist(counts_raw$authorsCount, main = "Authors per paper", xlab="Number of authors")
+```
+
+```{r fb_histogram, echo=FALSE, fig.cap="Figure 2: Number of facebook shares per article"}
+hist(counts_raw$facebookShareCount, main = "Facebook Shares per paper", xlab="Number of shares", xlim=c(0,30), breaks = 1000)
+```
+
+The average number of Facebook shares per paper in the dataset is `r mean(counts_raw$facebookShareCount)`
+
+# dplyr
+
+```{r, echo=FALSE}
+library("dplyr")
+```
+
+```{r}
+research <- filter(counts_raw, articleType == "Research Article")
+```
+
+```{r}
+research_2006 <- filter(research, year == 2006,
+                        facebookCommentCount > 0)
+nrow(research_2006)
+```
+
+```{r}
+research_2006_fb_tweet <- filter(research, year == 2006,
+                        facebookCommentCount > 0 | backtweetsCount > 0)
+nrow(research_2006)
+```
+
+```{r refer.to.columns}
+#once research is declared in the dplyr function, all column names can be referred to natively
+research_2006_fb_tweet_disease <- filter(research, year == 2006,
+                        facebookCommentCount > 0 | backtweetsCount > 0,
+                        grepl("Infectious Diseases", plosSubjectTags))
+nrow(research_2006)
+```
+
+```{r dplyr.split.data}
+#select is the dplyr command for selecting specific columns of our dataframe
+article_info <- select(research, doi:authorsCount)
+colnames(article_info)
+```
+
+```{r}
+# contains option selects all columns with that pattern matched. Additional columns can be added by
+# listing by hand, removed by listing with a minus sign.
+metrics <- select(research, contains("Count"), -authorsCount, f1000Factor, wikipediaCites)
+colnames(metrics)
+```
+
+```{r dplyr.slicing}
+#list contents; select takes names or integers, slice takes only integers
+head(select(research, 1:3))
+slice(article_info, 1:3)
+```
+
+```{r dplyr.filter}
+colnames(research)
+low_cite <- filter(research, year < 2008,
+                  pdfDownloadsCount > 1000,
+                  mendeleyReadersCount > 15,
+                  wosCountThru2011 < 10)
+nrow(low_cite)
+```
+
+## Chaining commands with dplyr
+
+pipe character %>%
+
+```{r dplyr.pipes}
+facebook_2006 <- research %>% filter(year == 2006) %>%
+  select(contains("facebook"))
+head(facebook_2006)
+
+research %>% filter(year == 2006) %>%
+  select(contains("facebook")) %>%
+  nrow
+```
+
+arrange, works similar to function order; orders dataframe according to a numeric column
+
+```{r dplyr.sorting}
+research %>% arrange(desc(authorsCount), desc(wosCountThru2011)) %>%
+  select(authorsCount, wosCountThru2011) %>%
+  slice(1:10)
+```
+
+```{r}
+research %>% arrange(desc(wosCountThru2011)) %>%
+  select(title, wosCountThru2011) %>%
+  slice(1:3)
+```
+
+```{r}
+research %>% arrange(desc(authorsCount)) %>%
+  select(authorsCount, title, journal, plosSubjectTags) %>%
+  slice(1:3)
+```
+
+## Summarizing with dplyr
+
+```{r dplyr.add.columns}
+research <- mutate(research, weeksSincePublished = daysSincePublished / 7,
+                   yearsSincePublished = weeksSincePublished / 52)
+select(research, contains("Since")) %>% slice(1:10)
+```
+
+```{r}
+summarize(research, plos_mean = mean(plosCommentCount),
+          plos_sd = sd(plosCommentCount))
+```
+
+```{r dplyr.summarizing}
+research %>% filter(journal == "pone", year == "2007") %>%
+  summarize(plos_mean = mean(plosCommentCount),
+          plos_sd = sd(plosCommentCount),
+          num = n())
+```
+
+## Using groupby
+
+```{r dplyr.groupby}
+research %>% group_by(journal, year) %>%
+  summarize(tweets_mean = mean(backtweetsCount))
+```
+
+```{r}
+tweets_by_journal <- research %>% group_by(journal) %>%
+  summarize(tweets_mean = mean(backtweetsCount),
+            SEM = sd(backtweetsCount)/sqrt(n()))
+tweets_by_journal
+```
+
+# ggplot2
+
+## ggplot basics
+
+```{r, echo=FALSE}
+library("ggplot2")
+```
+
+```{r ggplot2.plot}
+p <- ggplot(data = research, mapping = aes(x = pdfDownloadsCount,
+                                           y = wosCountThru2011)) +
+  geom_point(aes(color = journal, size = authorsCount, alpha = daysSincePublished))
+p
+```
+
+```{r ggplot2.uniform.mapping}
+#to assign something uniformly to a plot, don't use aes:
+q <- ggplot(data = research, mapping = aes(x = pdfDownloadsCount,
+                                           y = wosCountThru2011)) +
+  geom_point(color = "red")
+q
+```
+
+```{r}
+# change the location of the aesthetic in order to change whether future layers are calculated on
+# subsets or on the entire dataset.
+p <- ggplot(data = research, mapping = aes(x = pdfDownloadsCount,
+                                           y = wosCountThru2011,
+                                           color = journal)) +
+  geom_point() +
+  geom_smooth()
+p
+```
+
+```{r}
+#challenge
+p <- ggplot(data = research, mapping = aes(x = daysSincePublished,
+                                           y = wosCountThru2011)) +
+  geom_point(aes(color = journal), alpha = 0.5) +
+  geom_smooth(color = "red")
+p
+```
+
+```{r}
+#problems with infinite values
+p <- ggplot(data = research, mapping = aes(x = daysSincePublished,
+                                           y = wosCountThru2011)) +
+  geom_point(aes(color = journal)) +
+  geom_smooth() +
+  scale_x_log10() + scale_y_log10()
+p
+```
+
+```{r ggplot2.change.axes}
+#solutions
+p <- ggplot(data = research, mapping = aes(x = log10(pdfDownloadsCount + 1),
+                                           y = log10(wosCountThru2011 + 1))) +
+  geom_point(aes(color = journal)) +
+  geom_smooth() +
+  #change the scaling so that the axes look logarithmic, change limits of the y axis
+  scale_x_continuous(breaks = c(1, 3), labels = c(10, 1000)) +
+  scale_y_continuous(breaks = c(1, 3), labels = c(10, 1000),
+                     limits = c(1,3))
+p
+```
+
+
+```{r ggplot2.colors.and.labels}
+p + scale_color_grey()
+p + scale_color_brewer(palette = "Dark2",
+                       labels = 1:7, name = "PLOS")
+```
+
+```{r}
+p <- ggplot(data = research, mapping = aes(x = sqrt(pdfDownloadsCount),
+                                           y = sqrt(wosCountThru2011),
+                                           color = journal,
+                                           xlab = "Square Root of PDF Download Count",
+                                           ylab = "Square Root of Citation Count")) +
+  geom_point() +
+  geom_smooth() +
+  scale_color_brewer(palette = "Accent")
+p
+```
+
+## subplots and facets
+
+```{r ggplot2.facet}
+p <- ggplot(research, aes(x = log10(pdfDownloadsCount + 1),
+                          y = log10(wosCountThru2011 + 1))) +
+  geom_point(aes(color = journal)) +
+  geom_smooth() +
+  scale_x_continuous(breaks = c(1, 3), labels = c(10, 1000)) +
+  scale_y_continuous(breaks = c(1, 3), labels = c(10, 1000))
+
+p + facet_wrap(~journal)
+```
+
+```{r ggplot.facetgrid}
+research <- mutate(research, immuno = grepl("Immunology", plosSubjectTags))
+# can also use %+% to update the dataframe after changing the base dataframe 'research'
+p <- ggplot(research, aes(x = log10(pdfDownloadsCount + 1), y = log10(wosCountThru2011 + 1))) +
+  geom_point(aes(color = journal)) +
+  geom_smooth() +
+  scale_x_continuous(breaks = c(1, 3), labels = c(10, 1000)) +
+  scale_y_continuous(breaks = c(1, 3), labels = c(10, 1000))
+p + facet_grid(journal~immuno)
+```
+
+## Different plot types
+
+```{r}
+p <- ggplot(research, aes(x = journal,
+                          y = sqrt(wosCountThru2011))) +
+  geom_violin()
+p
+```
+
+```{r}
+#recall tweets_per_journal again
+tweets_bar <- ggplot(tweets_by_journal, aes(x = journal,
+                                            y = tweets_mean)) +
+  geom_bar(stat = "identity") +
+  geom_errorbar(aes(ymin = tweets_mean - SEM, ymax = tweets_mean + SEM), width = 0.2)
+tweets_bar
+```
+

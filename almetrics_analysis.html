@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+
+<meta charset="utf-8">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="pandoc" />
+
+<meta name="author" content="Catherine Triandafillou" />
+
+<meta name="date" content="2015-09-15" />
+
+<title>On the origin of citations</title>
+
+<script src="almetrics_analysis_files/jquery-1.11.0/jquery.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="almetrics_analysis_files/bootstrap-3.3.1/css/cerulean.min.css" rel="stylesheet" />
+<script src="almetrics_analysis_files/bootstrap-3.3.1/js/bootstrap.min.js"></script>
+<script src="almetrics_analysis_files/bootstrap-3.3.1/shim/html5shiv.min.js"></script>
+<script src="almetrics_analysis_files/bootstrap-3.3.1/shim/respond.min.js"></script>
+
+
+<style type="text/css">code{white-space: pre;}</style>
+<style type="text/css">
+table.sourceCode, tr.sourceCode, td.lineNumbers, td.sourceCode {
+  margin: 0; padding: 0; vertical-align: baseline; border: none; }
+table.sourceCode { width: 100%; line-height: 100%; background-color: #2a211c; color: #bdae9d; }
+td.lineNumbers { text-align: right; padding-right: 4px; padding-left: 4px; background-color: #2a211c; color: #bdae9d; border-right: 1px solid #bdae9d; }
+td.sourceCode { padding-left: 5px; }
+pre, code { color: #bdae9d; background-color: #2a211c; }
+code > span.kw { color: #43a8ed; font-weight: bold; }
+code > span.dt { text-decoration: underline; }
+code > span.dv { color: #44aa43; }
+code > span.bn { color: #44aa43; }
+code > span.fl { color: #44aa43; }
+code > span.ch { color: #049b0a; }
+code > span.st { color: #049b0a; }
+code > span.co { color: #0066ff; font-style: italic; }
+code > span.al { color: #ffff00; }
+code > span.fu { color: #ff9358; font-weight: bold; }
+code > span.er { font-weight: bold; }
+</style>
+<style type="text/css">
+  pre:not([class]) {
+    background-color: white;
+  }
+</style>
+
+
+
+</head>
+
+<body>
+
+<style type = "text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+code {
+  color: inherit;
+  background-color: rgba(0, 0, 0, 0.04);
+}
+img { 
+  max-width:100%; 
+  height: auto; 
+}
+</style>
+<div class="container-fluid main-container">
+
+
+<div id="header">
+<h1 class="title">On the origin of citations</h1>
+<h4 class="author"><em>Catherine Triandafillou</em></h4>
+<h4 class="date"><em>September 15, 2015</em></h4>
+</div>
+
+<div id="TOC">
+<ul>
+<li><a href="#load-the-data"><span class="toc-section-number">1</span> Load the data</a></li>
+<li><a href="#data-exploration"><span class="toc-section-number">2</span> Data exploration</a></li>
+<li><a href="#dplyr"><span class="toc-section-number">3</span> dplyr</a><ul>
+<li><a href="#chaining-commands-with-dplyr"><span class="toc-section-number">3.1</span> Chaining commands with dplyr</a></li>
+<li><a href="#summarizing-with-dplyr"><span class="toc-section-number">3.2</span> Summarizing with dplyr</a></li>
+<li><a href="#using-groupby"><span class="toc-section-number">3.3</span> Using groupby</a></li>
+</ul></li>
+<li><a href="#ggplot2"><span class="toc-section-number">4</span> ggplot2</a><ul>
+<li><a href="#ggplot-basics"><span class="toc-section-number">4.1</span> ggplot basics</a></li>
+<li><a href="#subplots-and-facets"><span class="toc-section-number">4.2</span> subplots and facets</a></li>
+</ul></li>
+</ul>
+</div>
+
+<div id="load-the-data" class="section level1">
+<h1><span class="header-section-number">1</span> Load the data</h1>
+<pre class="sourceCode r"><code class="sourceCode r">counts_raw &lt;-<span class="st"> </span><span class="kw">read.delim</span>(<span class="st">&quot;data/counts-raw.txt&quot;</span>)
+counts_norm &lt;-<span class="st"> </span><span class="kw">read.delim</span>(<span class="st">&quot;data/counts-raw.txt&quot;</span>)</code></pre>
+</div>
+<div id="data-exploration" class="section level1">
+<h1><span class="header-section-number">2</span> Data exploration</h1>
+<p>What’s the distribution of authors in all articles of our dataset?</p>
+<div class="figure">
+<img src="almetrics_analysis_files/figure-html/author_histogram-1.png" alt="Figure 1: Number of Authors per Article" /><p class="caption">Figure 1: Number of Authors per Article</p>
+</div>
+<div class="figure">
+<img src="almetrics_analysis_files/figure-html/fb_histogram-1.png" alt="Figure 2: Number of facebook shares per article" /><p class="caption">Figure 2: Number of facebook shares per article</p>
+</div>
+<p>The average number of Facebook shares per paper in the dataset is 0.6524187</p>
+</div>
+<div id="dplyr" class="section level1">
+<h1><span class="header-section-number">3</span> dplyr</h1>
+<pre><code>## Warning: package &#39;dplyr&#39; was built under R version 3.1.3</code></pre>
+<pre><code>## 
+## Attaching package: &#39;dplyr&#39;
+## 
+## The following objects are masked from &#39;package:stats&#39;:
+## 
+##     filter, lag
+## 
+## The following objects are masked from &#39;package:base&#39;:
+## 
+##     intersect, setdiff, setequal, union</code></pre>
+<pre class="sourceCode r"><code class="sourceCode r">research &lt;-<span class="st"> </span><span class="kw">filter</span>(counts_raw, articleType ==<span class="st"> &quot;Research Article&quot;</span>)</code></pre>
+<pre class="sourceCode r"><code class="sourceCode r">research_2006 &lt;-<span class="st"> </span><span class="kw">filter</span>(research, year ==<span class="st"> </span><span class="dv">2006</span>,
+                        facebookCommentCount &gt;<span class="st"> </span><span class="dv">0</span>)
+<span class="kw">nrow</span>(research_2006)</code></pre>
+<pre><code>## [1] 5</code></pre>
+<pre class="sourceCode r"><code class="sourceCode r">research_2006_fb_tweet &lt;-<span class="st"> </span><span class="kw">filter</span>(research, year ==<span class="st"> </span><span class="dv">2006</span>,
+                        facebookCommentCount &gt;<span class="st"> </span><span class="dv">0</span> |<span class="st"> </span>backtweetsCount &gt;<span class="st"> </span><span class="dv">0</span>)
+<span class="kw">nrow</span>(research_2006)</code></pre>
+<pre><code>## [1] 5</code></pre>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="co">#once research is declared in the dplyr function, all column names can be referred to natively</span>
+research_2006_fb_tweet_disease &lt;-<span class="st"> </span><span class="kw">filter</span>(research, year ==<span class="st"> </span><span class="dv">2006</span>,
+                        facebookCommentCount &gt;<span class="st"> </span><span class="dv">0</span> |<span class="st"> </span>backtweetsCount &gt;<span class="st"> </span><span class="dv">0</span>,
+                        <span class="kw">grepl</span>(<span class="st">&quot;Infectious Diseases&quot;</span>, plosSubjectTags))
+<span class="kw">nrow</span>(research_2006)</code></pre>
+<pre><code>## [1] 5</code></pre>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="co">#select is the dplyr command for selecting specific columns of our dataframe</span>
+article_info &lt;-<span class="st"> </span><span class="kw">select</span>(research, doi:authorsCount)
+<span class="kw">colnames</span>(article_info)</code></pre>
+<pre><code>## [1] &quot;doi&quot;          &quot;pubDate&quot;      &quot;journal&quot;      &quot;title&quot;       
+## [5] &quot;articleType&quot;  &quot;authorsCount&quot;</code></pre>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="co"># contains option selects all columns with that pattern matched. Additional columns can be added by</span>
+<span class="co"># listing by hand, removed by listing with a minus sign.</span>
+metrics &lt;-<span class="st"> </span><span class="kw">select</span>(research, <span class="kw">contains</span>(<span class="st">&quot;Count&quot;</span>), -authorsCount, f1000Factor, wikipediaCites)
+<span class="kw">colnames</span>(metrics)</code></pre>
+<pre><code>##  [1] &quot;backtweetsCount&quot;           &quot;deliciousCount&quot;           
+##  [3] &quot;facebookShareCount&quot;        &quot;facebookLikeCount&quot;        
+##  [5] &quot;facebookCommentCount&quot;      &quot;facebookClickCount&quot;       
+##  [7] &quot;mendeleyReadersCount&quot;      &quot;almBlogsCount&quot;            
+##  [9] &quot;pdfDownloadsCount&quot;         &quot;xmlDownloadsCount&quot;        
+## [11] &quot;htmlDownloadsCount&quot;        &quot;almCiteULikeCount&quot;        
+## [13] &quot;almScopusCount&quot;            &quot;almPubMedCentralCount&quot;    
+## [15] &quot;almCrossRefCount&quot;          &quot;plosCommentCount&quot;         
+## [17] &quot;plosCommentResponsesCount&quot; &quot;wosCountThru2010&quot;         
+## [19] &quot;wosCountThru2011&quot;          &quot;f1000Factor&quot;              
+## [21] &quot;wikipediaCites&quot;</code></pre>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="co">#list contents; select takes names or integers, slice takes only integers</span>
+<span class="kw">head</span>(<span class="kw">select</span>(research, <span class="dv">1</span>:<span class="dv">3</span>))</code></pre>
+<pre><code>##                            doi    pubDate journal
+## 1 10.1371/journal.pbio.0000001 2003-10-13    pbio
+## 2 10.1371/journal.pbio.0000002 2003-11-17    pbio
+## 3 10.1371/journal.pbio.0000005 2003-08-18    pbio
+## 4 10.1371/journal.pbio.0000006 2003-08-18    pbio
+## 5 10.1371/journal.pbio.0000010 2003-10-13    pbio
+## 6 10.1371/journal.pbio.0000012 2003-10-13    pbio</code></pre>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">slice</span>(article_info, <span class="dv">1</span>:<span class="dv">3</span>)</code></pre>
+<pre><code>##                            doi    pubDate journal
+## 1 10.1371/journal.pbio.0000001 2003-10-13    pbio
+## 2 10.1371/journal.pbio.0000002 2003-11-17    pbio
+## 3 10.1371/journal.pbio.0000005 2003-08-18    pbio
+##                                                                                     title
+## 1             A Functional Analysis of the Spacer of V(D)J Recombination Signal Sequences
+## 2                             Viral Discovery and Sequence Recovery Using DNA Microarrays
+## 3 The Transcriptome of the Intraerythrocytic Developmental Cycle of Plasmodium falciparum
+##        articleType authorsCount
+## 1 Research Article            6
+## 2 Research Article           14
+## 3 Research Article            6</code></pre>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">colnames</span>(research)</code></pre>
+<pre><code>##  [1] &quot;doi&quot;                       &quot;pubDate&quot;                  
+##  [3] &quot;journal&quot;                   &quot;title&quot;                    
+##  [5] &quot;articleType&quot;               &quot;authorsCount&quot;             
+##  [7] &quot;f1000Factor&quot;               &quot;backtweetsCount&quot;          
+##  [9] &quot;deliciousCount&quot;            &quot;pmid&quot;                     
+## [11] &quot;plosSubjectTags&quot;           &quot;plosSubSubjectTags&quot;       
+## [13] &quot;facebookShareCount&quot;        &quot;facebookLikeCount&quot;        
+## [15] &quot;facebookCommentCount&quot;      &quot;facebookClickCount&quot;       
+## [17] &quot;mendeleyReadersCount&quot;      &quot;almBlogsCount&quot;            
+## [19] &quot;pdfDownloadsCount&quot;         &quot;xmlDownloadsCount&quot;        
+## [21] &quot;htmlDownloadsCount&quot;        &quot;almCiteULikeCount&quot;        
+## [23] &quot;almScopusCount&quot;            &quot;almPubMedCentralCount&quot;    
+## [25] &quot;almCrossRefCount&quot;          &quot;plosCommentCount&quot;         
+## [27] &quot;plosCommentResponsesCount&quot; &quot;wikipediaCites&quot;           
+## [29] &quot;year&quot;                      &quot;daysSincePublished&quot;       
+## [31] &quot;wosCountThru2010&quot;          &quot;wosCountThru2011&quot;</code></pre>
+<pre class="sourceCode r"><code class="sourceCode r">low_cite &lt;-<span class="st"> </span><span class="kw">filter</span>(research, year &lt;<span class="st"> </span><span class="dv">2008</span>,
+                  pdfDownloadsCount &gt;<span class="st"> </span><span class="dv">1000</span>,
+                  mendeleyReadersCount &gt;<span class="st"> </span><span class="dv">15</span>,
+                  wosCountThru2011 &lt;<span class="st"> </span><span class="dv">10</span>)
+<span class="kw">nrow</span>(low_cite)</code></pre>
+<pre><code>## [1] 18</code></pre>
+<div id="chaining-commands-with-dplyr" class="section level2">
+<h2><span class="header-section-number">3.1</span> Chaining commands with dplyr</h2>
+<p>pipe character %&gt;%</p>
+<pre class="sourceCode r"><code class="sourceCode r">facebook_2006 &lt;-<span class="st"> </span>research %&gt;%<span class="st"> </span><span class="kw">filter</span>(year ==<span class="st"> </span><span class="dv">2006</span>) %&gt;%
+<span class="st">  </span><span class="kw">select</span>(<span class="kw">contains</span>(<span class="st">&quot;facebook&quot;</span>))
+<span class="kw">head</span>(facebook_2006)</code></pre>
+<pre><code>##   facebookShareCount facebookLikeCount facebookCommentCount
+## 1                  0                 0                    0
+## 2                  0                 0                    0
+## 3                  0                 0                    0
+## 4                  0                 0                    0
+## 5                  0                 0                    0
+## 6                  0                 0                    0
+##   facebookClickCount
+## 1                  0
+## 2                  0
+## 3                  0
+## 4                  0
+## 5                  0
+## 6                  0</code></pre>
+<pre class="sourceCode r"><code class="sourceCode r">research %&gt;%<span class="st"> </span><span class="kw">filter</span>(year ==<span class="st"> </span><span class="dv">2006</span>) %&gt;%
+<span class="st">  </span><span class="kw">select</span>(<span class="kw">contains</span>(<span class="st">&quot;facebook&quot;</span>)) %&gt;%
+<span class="st">  </span>nrow</code></pre>
+<pre><code>## [1] 873</code></pre>
+<p>arrange, works similar to function order; orders dataframe according to a numeric column</p>
+<pre class="sourceCode r"><code class="sourceCode r">research %&gt;%<span class="st"> </span><span class="kw">arrange</span>(<span class="kw">desc</span>(authorsCount), <span class="kw">desc</span>(wosCountThru2011)) %&gt;%
+<span class="st">  </span><span class="kw">select</span>(authorsCount, wosCountThru2011) %&gt;%
+<span class="st">  </span><span class="kw">slice</span>(<span class="dv">1</span>:<span class="dv">10</span>)</code></pre>
+<pre><code>##    authorsCount wosCountThru2011
+## 1           158              196
+## 2           144                0
+## 3           120                7
+## 4           117              300
+## 5           114              119
+## 6            82                6
+## 7            80                3
+## 8            74                5
+## 9            71               25
+## 10           67               16</code></pre>
+<pre class="sourceCode r"><code class="sourceCode r">research %&gt;%<span class="st"> </span><span class="kw">arrange</span>(<span class="kw">desc</span>(wosCountThru2011)) %&gt;%
+<span class="st">  </span><span class="kw">select</span>(title, wosCountThru2011) %&gt;%
+<span class="st">  </span><span class="kw">slice</span>(<span class="dv">1</span>:<span class="dv">3</span>)</code></pre>
+<pre><code>##                                                                     title
+## 1                        Relaxed Phylogenetics and Dating with Confidence
+## 2                                                  Human MicroRNA Targets
+## 3 Projections of Global Mortality and Burden of Disease from 2002 to 2030
+##   wosCountThru2011
+## 1              737
+## 2              698
+## 3              584</code></pre>
+<pre class="sourceCode r"><code class="sourceCode r">research %&gt;%<span class="st"> </span><span class="kw">arrange</span>(<span class="kw">desc</span>(authorsCount)) %&gt;%
+<span class="st">  </span><span class="kw">select</span>(authorsCount, title, journal, plosSubjectTags) %&gt;%
+<span class="st">  </span><span class="kw">slice</span>(<span class="dv">1</span>:<span class="dv">3</span>)</code></pre>
+<pre><code>##   authorsCount
+## 1          158
+## 2          144
+## 3          120
+##                                                                                                         title
+## 1                           Integrative Annotation of 21,037 Human Genes Validated by Full-Length cDNA Clones
+## 2 Genome-Wide Association Scan Meta-Analysis Identifies Three Loci Influencing Adiposity and Fat Distribution
+## 3                    Common Genetic Variants and Modification of Penetrance of BRCA2-Associated Breast Cancer
+##   journal                                  plosSubjectTags
+## 1    pbio      Computational Biology|Genetics and Genomics
+## 2    pgen Diabetes and Endocrinology|Genetics and Genomics
+## 3    pgen                            Genetics and Genomics</code></pre>
+</div>
+<div id="summarizing-with-dplyr" class="section level2">
+<h2><span class="header-section-number">3.2</span> Summarizing with dplyr</h2>
+<pre class="sourceCode r"><code class="sourceCode r">research &lt;-<span class="st"> </span><span class="kw">mutate</span>(research, <span class="dt">weeksSincePublished =</span> daysSincePublished /<span class="st"> </span><span class="dv">7</span>,
+                   <span class="dt">yearsSincePublished =</span> weeksSincePublished /<span class="st"> </span><span class="dv">52</span>)
+<span class="kw">select</span>(research, <span class="kw">contains</span>(<span class="st">&quot;Since&quot;</span>)) %&gt;%<span class="st"> </span><span class="kw">slice</span>(<span class="dv">1</span>:<span class="dv">10</span>)</code></pre>
+<pre><code>##    daysSincePublished weeksSincePublished yearsSincePublished
+## 1                2628            375.4286            7.219780
+## 2                2593            370.4286            7.123626
+## 3                2684            383.4286            7.373626
+## 4                2684            383.4286            7.373626
+## 5                2628            375.4286            7.219780
+## 6                2628            375.4286            7.219780
+## 7                2656            379.4286            7.296703
+## 8                2656            379.4286            7.296703
+## 9                2628            375.4286            7.219780
+## 10               2628            375.4286            7.219780</code></pre>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">summarize</span>(research, <span class="dt">plos_mean =</span> <span class="kw">mean</span>(plosCommentCount),
+          <span class="dt">plos_sd =</span> <span class="kw">sd</span>(plosCommentCount))</code></pre>
+<pre><code>##   plos_mean  plos_sd
+## 1 0.2642681 1.230676</code></pre>
+<pre class="sourceCode r"><code class="sourceCode r">research %&gt;%<span class="st"> </span><span class="kw">filter</span>(journal ==<span class="st"> &quot;pone&quot;</span>, year ==<span class="st"> &quot;2007&quot;</span>) %&gt;%
+<span class="st">  </span><span class="kw">summarize</span>(<span class="dt">plos_mean =</span> <span class="kw">mean</span>(plosCommentCount),
+          <span class="dt">plos_sd =</span> <span class="kw">sd</span>(plosCommentCount),
+          <span class="dt">num =</span> <span class="kw">n</span>())</code></pre>
+<pre><code>##   plos_mean  plos_sd  num
+## 1 0.8315704 2.033141 1229</code></pre>
+</div>
+<div id="using-groupby" class="section level2">
+<h2><span class="header-section-number">3.3</span> Using groupby</h2>
+<pre class="sourceCode r"><code class="sourceCode r">research %&gt;%<span class="st"> </span><span class="kw">group_by</span>(journal, year) %&gt;%
+<span class="st">  </span><span class="kw">summarize</span>(<span class="dt">tweets_mean =</span> <span class="kw">mean</span>(backtweetsCount))</code></pre>
+<pre><code>## Source: local data frame [42 x 3]
+## Groups: journal [?]
+## 
+##    journal  year tweets_mean
+##     (fctr) (int)       (dbl)
+## 1     pbio  2003 0.000000000
+## 2     pbio  2004 0.000000000
+## 3     pbio  2005 0.011363636
+## 4     pbio  2006 0.010869565
+## 5     pbio  2007 0.004926108
+## 6     pbio  2008 0.030456853
+## 7     pbio  2009 0.005524862
+## 8     pbio  2010 0.367231638
+## 9     pcbi  2005 0.000000000
+## 10    pcbi  2006 0.000000000
+## ..     ...   ...         ...</code></pre>
+<pre class="sourceCode r"><code class="sourceCode r">tweets_by_journal &lt;-<span class="st"> </span>research %&gt;%<span class="st"> </span><span class="kw">group_by</span>(journal) %&gt;%
+<span class="st">  </span><span class="kw">summarize</span>(<span class="dt">tweets_mean =</span> <span class="kw">mean</span>(backtweetsCount),
+            <span class="dt">SEM =</span> <span class="kw">sd</span>(backtweetsCount)/<span class="kw">sqrt</span>(<span class="kw">n</span>()))
+tweets_by_journal</code></pre>
+<pre><code>## Source: local data frame [7 x 3]
+## 
+##   journal tweets_mean         SEM
+##    (fctr)       (dbl)       (dbl)
+## 1    pbio  0.05811321 0.020153395
+## 2    pcbi  0.12657291 0.052177184
+## 3    pgen  0.06547251 0.020408525
+## 4    pmed  0.31104199 0.187868371
+## 5    pntd  0.02576490 0.009057697
+## 6    pone  0.49303878 0.034484187
+## 7    ppat  0.02604524 0.008807428</code></pre>
+</div>
+</div>
+<div id="ggplot2" class="section level1">
+<h1><span class="header-section-number">4</span> ggplot2</h1>
+<div id="ggplot-basics" class="section level2">
+<h2><span class="header-section-number">4.1</span> ggplot basics</h2>
+<pre><code>## Warning: package &#39;ggplot2&#39; was built under R version 3.1.3</code></pre>
+<pre class="sourceCode r"><code class="sourceCode r">p &lt;-<span class="st"> </span><span class="kw">ggplot</span>(<span class="dt">data =</span> research, <span class="dt">mapping =</span> <span class="kw">aes</span>(<span class="dt">x =</span> pdfDownloadsCount,
+                                           <span class="dt">y =</span> wosCountThru2011)) +
+<span class="st">  </span><span class="kw">geom_point</span>(<span class="kw">aes</span>(<span class="dt">color =</span> journal, <span class="dt">size =</span> authorsCount, <span class="dt">alpha =</span> daysSincePublished))
+p</code></pre>
+<div class="figure">
+<img src="almetrics_analysis_files/figure-html/ggplot2.plot-1.png" />
+</div>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="co">#to assign something uniformly to a plot, don&#39;t use aes:</span>
+q &lt;-<span class="st"> </span><span class="kw">ggplot</span>(<span class="dt">data =</span> research, <span class="dt">mapping =</span> <span class="kw">aes</span>(<span class="dt">x =</span> pdfDownloadsCount,
+                                           <span class="dt">y =</span> wosCountThru2011)) +
+<span class="st">  </span><span class="kw">geom_point</span>(<span class="dt">color =</span> <span class="st">&quot;red&quot;</span>)
+q</code></pre>
+<div class="figure">
+<img src="almetrics_analysis_files/figure-html/ggplot2.uniform.mapping-1.png" />
+</div>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="co"># change the location of the aesthetic in order to change whether future layers are calculated on</span>
+<span class="co"># subsets or on the entire dataset.</span>
+p &lt;-<span class="st"> </span><span class="kw">ggplot</span>(<span class="dt">data =</span> research, <span class="dt">mapping =</span> <span class="kw">aes</span>(<span class="dt">x =</span> pdfDownloadsCount,
+                                           <span class="dt">y =</span> wosCountThru2011,
+                                           <span class="dt">color =</span> journal)) +
+<span class="st">  </span><span class="kw">geom_point</span>() +
+<span class="st">  </span><span class="kw">geom_smooth</span>()
+p</code></pre>
+<pre><code>## geom_smooth: method=&quot;auto&quot; and size of largest group is &gt;=1000, so using gam with formula: y ~ s(x, bs = &quot;cs&quot;). Use &#39;method = x&#39; to change the smoothing method.</code></pre>
+<div class="figure">
+<img src="almetrics_analysis_files/figure-html/unnamed-chunk-11-1.png" />
+</div>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="co">#challenge</span>
+p &lt;-<span class="st"> </span><span class="kw">ggplot</span>(<span class="dt">data =</span> research, <span class="dt">mapping =</span> <span class="kw">aes</span>(<span class="dt">x =</span> daysSincePublished,
+                                           <span class="dt">y =</span> wosCountThru2011)) +
+<span class="st">  </span><span class="kw">geom_point</span>(<span class="kw">aes</span>(<span class="dt">color =</span> journal), <span class="dt">alpha =</span> <span class="fl">0.5</span>) +
+<span class="st">  </span><span class="kw">geom_smooth</span>(<span class="dt">color =</span> <span class="st">&quot;red&quot;</span>)
+p</code></pre>
+<pre><code>## geom_smooth: method=&quot;auto&quot; and size of largest group is &gt;=1000, so using gam with formula: y ~ s(x, bs = &quot;cs&quot;). Use &#39;method = x&#39; to change the smoothing method.</code></pre>
+<div class="figure">
+<img src="almetrics_analysis_files/figure-html/unnamed-chunk-12-1.png" />
+</div>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="co">#problems with infinite values</span>
+p &lt;-<span class="st"> </span><span class="kw">ggplot</span>(<span class="dt">data =</span> research, <span class="dt">mapping =</span> <span class="kw">aes</span>(<span class="dt">x =</span> daysSincePublished,
+                                           <span class="dt">y =</span> wosCountThru2011)) +
+<span class="st">  </span><span class="kw">geom_point</span>(<span class="kw">aes</span>(<span class="dt">color =</span> journal)) +
+<span class="st">  </span><span class="kw">geom_smooth</span>() +
+<span class="st">  </span><span class="kw">scale_x_log10</span>() +<span class="st"> </span><span class="kw">scale_y_log10</span>()
+p</code></pre>
+<pre><code>## geom_smooth: method=&quot;auto&quot; and size of largest group is &gt;=1000, so using gam with formula: y ~ s(x, bs = &quot;cs&quot;). Use &#39;method = x&#39; to change the smoothing method.</code></pre>
+<div class="figure">
+<img src="almetrics_analysis_files/figure-html/unnamed-chunk-13-1.png" />
+</div>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="co">#solutions</span>
+p &lt;-<span class="st"> </span><span class="kw">ggplot</span>(<span class="dt">data =</span> research, <span class="dt">mapping =</span> <span class="kw">aes</span>(<span class="dt">x =</span> <span class="kw">log10</span>(pdfDownloadsCount +<span class="st"> </span><span class="dv">1</span>),
+                                           <span class="dt">y =</span> <span class="kw">log10</span>(wosCountThru2011 +<span class="st"> </span><span class="dv">1</span>))) +
+<span class="st">  </span><span class="kw">geom_point</span>(<span class="kw">aes</span>(<span class="dt">color =</span> journal)) +
+<span class="st">  </span><span class="kw">geom_smooth</span>() +
+<span class="st">  </span><span class="co">#change the scaling so that the axes look logarithmic, change limits of the y axis</span>
+<span class="st">  </span><span class="kw">scale_x_continuous</span>(<span class="dt">breaks =</span> <span class="kw">c</span>(<span class="dv">1</span>, <span class="dv">3</span>), <span class="dt">labels =</span> <span class="kw">c</span>(<span class="dv">10</span>, <span class="dv">1000</span>)) +
+<span class="st">  </span><span class="kw">scale_y_continuous</span>(<span class="dt">breaks =</span> <span class="kw">c</span>(<span class="dv">1</span>, <span class="dv">3</span>), <span class="dt">labels =</span> <span class="kw">c</span>(<span class="dv">10</span>, <span class="dv">1000</span>),
+                     <span class="dt">limits =</span> <span class="kw">c</span>(<span class="dv">1</span>,<span class="dv">3</span>))
+p</code></pre>
+<pre><code>## geom_smooth: method=&quot;auto&quot; and size of largest group is &gt;=1000, so using gam with formula: y ~ s(x, bs = &quot;cs&quot;). Use &#39;method = x&#39; to change the smoothing method.</code></pre>
+<pre><code>## Warning: Removed 12214 rows containing missing values (stat_smooth).</code></pre>
+<pre><code>## Warning: Removed 12214 rows containing missing values (geom_point).</code></pre>
+<div class="figure">
+<img src="almetrics_analysis_files/figure-html/ggplot2.change.axes-1.png" />
+</div>
+<pre class="sourceCode r"><code class="sourceCode r">p +<span class="st"> </span><span class="kw">scale_color_grey</span>()</code></pre>
+<pre><code>## geom_smooth: method=&quot;auto&quot; and size of largest group is &gt;=1000, so using gam with formula: y ~ s(x, bs = &quot;cs&quot;). Use &#39;method = x&#39; to change the smoothing method.</code></pre>
+<pre><code>## Warning: Removed 12214 rows containing missing values (stat_smooth).</code></pre>
+<pre><code>## Warning: Removed 12214 rows containing missing values (geom_point).</code></pre>
+<div class="figure">
+<img src="almetrics_analysis_files/figure-html/ggplot2.colors.and.labels-1.png" />
+</div>
+<pre class="sourceCode r"><code class="sourceCode r">p +<span class="st"> </span><span class="kw">scale_color_brewer</span>(<span class="dt">palette =</span> <span class="st">&quot;Dark2&quot;</span>,
+                       <span class="dt">labels =</span> <span class="dv">1</span>:<span class="dv">7</span>, <span class="dt">name =</span> <span class="st">&quot;PLOS&quot;</span>)</code></pre>
+<pre><code>## geom_smooth: method=&quot;auto&quot; and size of largest group is &gt;=1000, so using gam with formula: y ~ s(x, bs = &quot;cs&quot;). Use &#39;method = x&#39; to change the smoothing method.</code></pre>
+<pre><code>## Warning: Removed 12214 rows containing missing values (stat_smooth).</code></pre>
+<pre><code>## Warning: Removed 12214 rows containing missing values (geom_point).</code></pre>
+<div class="figure">
+<img src="almetrics_analysis_files/figure-html/ggplot2.colors.and.labels-2.png" />
+</div>
+<pre class="sourceCode r"><code class="sourceCode r">p &lt;-<span class="st"> </span><span class="kw">ggplot</span>(<span class="dt">data =</span> research, <span class="dt">mapping =</span> <span class="kw">aes</span>(<span class="dt">x =</span> <span class="kw">sqrt</span>(pdfDownloadsCount),
+                                           <span class="dt">y =</span> <span class="kw">sqrt</span>(wosCountThru2011),
+                                           <span class="dt">color =</span> journal)) +
+<span class="st">  </span><span class="kw">geom_point</span>() +
+<span class="st">  </span><span class="kw">scale_color_brewer</span>(<span class="dt">palette =</span> <span class="st">&quot;Accent&quot;</span>)
+p</code></pre>
+<div class="figure">
+<img src="almetrics_analysis_files/figure-html/unnamed-chunk-14-1.png" />
+</div>
+</div>
+<div id="subplots-and-facets" class="section level2">
+<h2><span class="header-section-number">4.2</span> subplots and facets</h2>
+</div>
+</div>
+
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+$(document).ready(function () {
+  $('tr.header').parent('thead').parent('table').addClass('table table-condensed');
+});
+
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>
